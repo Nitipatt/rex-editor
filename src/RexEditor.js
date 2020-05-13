@@ -4,16 +4,17 @@ import {
   EditorState,
   RichUtils,
   DefaultDraftBlockRenderMap,
+  Modifier
 } from "draft-js";
 import "./scss/RexEditor.scss";
 import Immutable from "immutable";
+import { SketchPicker } from 'react-color';
 
 class CustomBlock extends React.Component {
   render() {
     return <div className="CustomBlock">{this.props.children}</div>;
   }
 }
-
 const blockRenderMap = Immutable.Map({
   CustomBlock: {
     element: "div",
@@ -34,7 +35,12 @@ const extendedBlockRenderMap = DefaultDraftBlockRenderMap.merge(blockRenderMap);
 export default class RexEditor extends React.Component {
   constructor(props) {
     super(props);
-    this.state = { editorState: EditorState.createEmpty() };
+    this.state = { editorState: EditorState.createEmpty(),
+      colorStyleMap: {
+        black: {
+          color: 'black',
+        }
+      }};
   }
   setNewEditorState = (newState) => {
     this.setState({ editorState: newState });
@@ -86,23 +92,67 @@ export default class RexEditor extends React.Component {
     this.setState({ editorState });
   };
   getSelectedBlock = () => {
-    var startKey = this.state.editorState.getSelection().getStartKey();
-    var selectedBlock = this.state.editorState
+    const { editorState } = this.state;
+    var startKey = editorState.getSelection().getStartKey();
+    var selectedBlock = editorState
       .getCurrentContent()
       .getBlockForKey(startKey);
     console.log(selectedBlock);
   };
-  test = () => {
-    // const editorState = this.state.editorState
-    // const contentState = editorState.getCurrentContent()
-    // const selectionState = editorState.getSelection()
-    // console.log('content', contentState)
-    // console.log('selection', selectionState)
+  setColorStyleMap = (color) => {
+    return new Promise((resolve)=>{
+      this.setState({colorStyleMap: {
+        [color]: {
+          color: color,
+        }
+      }}, resolve())
+    })
+  }
+  setColor = (toggledColor = '#000') => {
+
+    const { editorState, colorStyleMap } = this.state;
+    const selection = editorState.getSelection();
+    // remove all current style color
+    // const nextContentState = Object.keys(colorStyleMap).reduce(
+    //   (contentState, color) => {
+    //     return Modifier.removeInlineStyle(contentState, selection, color);
+    //   },
+    //   editorState.getCurrentContent()
+    // );
+
+    const nextContentState = editorState.getCurrentContent()
+
+    let nextEditorState = EditorState.push(
+      editorState,
+      nextContentState,
+      "change-inline-style"
+    );
+    const currentStyle = editorState.getCurrentInlineStyle();
+
+    // Unset style override for current color.
+    if (selection.isCollapsed()) {
+      nextEditorState = currentStyle.reduce((state, color) => {
+        return RichUtils.toggleInlineStyle(state, color);
+      }, nextEditorState);
+    }
+    // If the color is being toggled on, apply it.
+    if (!currentStyle.has(toggledColor)) {
+      nextEditorState = RichUtils.toggleInlineStyle(
+        nextEditorState,
+        toggledColor
+      );
+    }
+
+    this.setNewEditorState(nextEditorState);
   };
 
   render() {
     return (
       <div className="rex-editor">
+        <SketchPicker
+          color={ Object.keys(this.state.colorStyleMap)[0] }
+          onChangeComplete={ (color)=>{this.setColorStyleMap(color.hex)} }
+        />
         <div className="menu-bar">
           <button onClick={() => this.onMenuClick("bold")}>B</button>
           <button onClick={() => this.onMenuClick("italic")}>I</button>
@@ -114,12 +164,13 @@ export default class RexEditor extends React.Component {
           <button onClick={() => this.onMenuClick("text-right")}>Right</button>
           <button onClick={() => this.onMenuClick("undo")}>Undo</button>
           <button onClick={() => this.onMenuClick("redo")}>Redo</button>
-          <button onClick={() => this.getSelectedBlock()}>
+          {/* <button onClick={() => this.getSelectedBlock()}>
             Get Selection block
-          </button>
-          <button onClick={() => this.test()}>test</button>
+          </button> */}
+          <button onClick={() => this.setColor(Object.keys(this.state.colorStyleMap)[0])}>Set Color</button>
         </div>
         <Editor
+          customStyleMap={this.state.colorStyleMap}
           editorState={this.state.editorState}
           onChange={this.onTextChange}
           handleKeyCommand={this.handleKeyCommand}
