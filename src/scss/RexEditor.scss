@@ -7,8 +7,16 @@
   .DraftEditor-root{
     padding: 20px;
     background-color: #eee;
-    .public-DraftStyleDefault-block{
-    
+    .public-DraftEditor-content{
+      .text-left{
+        text-align: left;
+      }
+      .text-center{
+        text-align: center;
+      }
+      .text-right{
+        text-align: right;
+      }
     }
   }
   
