@@ -1,12 +1,15 @@
 .rex-editor{
-  border: 1px solid;
+  border: 1px solid #999;
+  border-radius: 4px;
   .menu-bar{
     display: flex;
     flex-flow: row wrap;
   }
   .DraftEditor-root{
-    padding: 20px;
-    background-color: #eee;
+    border-top: 1px solid #999;
+    .DraftEditor-editorContainer > div:first-child{
+        padding: 10px;
+    }
     .public-DraftEditor-content{
       .text-left{
         text-align: left;

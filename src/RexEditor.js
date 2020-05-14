@@ -4,11 +4,11 @@ import {
   EditorState,
   RichUtils,
   DefaultDraftBlockRenderMap,
-  Modifier
+  Modifier,
 } from "draft-js";
 import "./scss/RexEditor.scss";
 import Immutable from "immutable";
-import { SketchPicker } from 'react-color';
+import { SketchPicker } from "react-color";
 
 class CustomBlock extends React.Component {
   render() {
@@ -35,13 +35,16 @@ const extendedBlockRenderMap = DefaultDraftBlockRenderMap.merge(blockRenderMap);
 export default class RexEditor extends React.Component {
   constructor(props) {
     super(props);
-    this.state = { editorState: EditorState.createEmpty(),
-      colorStyleMap: {
-        black: {
-          color: 'black',
-        }
-      }};
-      this.RexEditorRef = React.createRef();
+    this.state = {
+      editorState: EditorState.createEmpty(),
+      styleMap: {},
+      style: {
+        color: "#000",
+        fontSize: "18px",
+      },
+      showColorPicker: false,
+    };
+    this.RexEditorRef = React.createRef();
   }
   setNewEditorState = (newState) => {
     this.setState({ editorState: newState });
@@ -70,6 +73,18 @@ export default class RexEditor extends React.Component {
         return this.setBlockType("textCenter");
       case "text-right":
         return this.setBlockType("textRight");
+      case "unordered-list":
+        return this.setBlockType("unordered-list-item");
+      case "ordered-list":
+        return this.setBlockType("ordered-list-item");
+      case "color-picker":
+        return this.setState({ showColorPicker: !this.state.showColorPicker })
+      case "set-color":
+        return this.activeStyle("color")
+      case "get-html":
+        return this.getHTML()
+      case "set-font-size":
+        return this.activeStyle("fontSize")
       default:
         return this.handleKeyCommand(command, this.state.editorState);
     }
@@ -83,7 +98,8 @@ export default class RexEditor extends React.Component {
         return "text-center";
       case "textRight":
         return "text-right";
-      default: return '';
+      default:
+        return "";
     }
   };
   setBlockType = (blockType) => {
@@ -93,125 +109,141 @@ export default class RexEditor extends React.Component {
     );
     this.setState({ editorState });
   };
-  getSelectedBlock = () => {
-    const { editorState } = this.state;
-    var startKey = editorState.getSelection().getStartKey();
-    var selectedBlock = editorState
-      .getCurrentContent()
-      .getBlockForKey(startKey);
-    console.log(selectedBlock);
+  // getSelectedBlock = () => {
+  //   const { editorState } = this.state;
+  //   var startKey = editorState.getSelection().getStartKey();
+  //   var selectedBlock = editorState
+  //     .getCurrentContent()
+  //     .getBlockForKey(startKey);
+  //   console.log(selectedBlock);
+  // };
+  setStyleState = (state, value) => {
+    this.setState({ style: { ...this.state.style, ...{ [state]: value } } });
   };
-  setColorStyleMap = (color) => {
-    return new Promise((resolve)=>{
-      this.setState({colorStyleMap: {
-        [color]: {
-          color: color,
-        }
-      }}, resolve())
-    })
-  }
-  setColor = (toggledColor = '#000') => {
-
-    const { editorState, colorStyleMap } = this.state;
-    const selection = editorState.getSelection();
-    // remove all current style color
-    // const nextContentState = Object.keys(colorStyleMap).reduce(
-    //   (contentState, color) => {
-    //     return Modifier.removeInlineStyle(contentState, selection, color);
-    //   },
-    //   editorState.getCurrentContent()
-    // );
-
-    const nextContentState = editorState.getCurrentContent()
-
+  activeStyle = async (cssAttr) => {
+    await this.setStyleMap(cssAttr, this.state.style[cssAttr]);
+    this.setStyleMapToEditor(cssAttr);
+  };
+  setStyleMap = (cssAttr, value) => {
+    return new Promise((resolve) => {
+      this.setState(
+        {
+          styleMap: {
+            [cssAttr]: {
+              [cssAttr]: value,
+            },
+          },
+        },
+        resolve()
+      );
+    });
+  };
+  setStyleMapToEditor = (toggledStyle) => {
+    const { editorState } = this.state;
+    const nextContentState = editorState.getCurrentContent();
     let nextEditorState = EditorState.push(
       editorState,
       nextContentState,
       "change-inline-style"
     );
-    const currentStyle = editorState.getCurrentInlineStyle();
-
-    // Unset style override for current color.
-    if (selection.isCollapsed()) {
-      nextEditorState = currentStyle.reduce((state, color) => {
-        return RichUtils.toggleInlineStyle(state, color);
-      }, nextEditorState);
-    }
-    // If the color is being toggled on, apply it.
-    if (!currentStyle.has(toggledColor)) {
-      nextEditorState = RichUtils.toggleInlineStyle(
-        nextEditorState,
-        toggledColor
-      );
-    }
-
+    nextEditorState = RichUtils.toggleInlineStyle(
+      nextEditorState,
+      toggledStyle
+    );
     this.setNewEditorState(nextEditorState);
   };
   getHTML = () => {
     // Use function
     const addStyle = (element, styleName, value) => {
-      return element.style[styleName] = value
-    }
-    // Clone element
-    const contentDiv = this.RexEditorRef.current.editor.children[0].cloneNode(true)
+      return (element.style[styleName] = value);
+    };
+    // iterate function
+    const transformList = (wrapper, contentDiv) => {
+      for (let item of contentDiv.children) {
+        const itemTagName = item.tagName;
+        let rowWrapper = document.createElement(itemTagName);
 
-    let wrapper = document.createElement("div")
-    for(let item of contentDiv.children){
-      const rowClassList = item.classList
-      let rowWrapper = document.createElement("div")
-      for(let rowClass of rowClassList){
-        switch(rowClass){
-          case 'text-left': addStyle(rowWrapper,'text-align', 'left')
-          break
-          case 'text-center': addStyle(rowWrapper,'text-align', 'center')
-          break
-          case 'text-right': addStyle(rowWrapper,'text-align', 'right')
-          break
-          default: break
-        }
-      }
-      if(item.children[0].children){
-        for(let span of item.children[0].children){
-          const styleList = span.style
-          let spanText = document.createElement("span")
-          for(let style of styleList){
-            addStyle(spanText, style, styleList[style])
+        if (["UL", "OL"].includes(itemTagName)) {
+          rowWrapper = transformList(rowWrapper, item);
+        } else {
+          const rowClassList = item.classList;
+          for (let rowClass of rowClassList) {
+            switch (rowClass) {
+              case "text-left":
+                addStyle(rowWrapper, "text-align", "left");
+                break;
+              case "text-center":
+                addStyle(rowWrapper, "text-align", "center");
+                break;
+              case "text-right":
+                addStyle(rowWrapper, "text-align", "right");
+                break;
+              default:
+                break;
+            }
           }
-          spanText.innerText = span.children[0].innerText
-          rowWrapper.appendChild(spanText)
+
+          for (let span of item.children[0].children) {
+            const styleList = span.style;
+            let spanText = document.createElement("span");
+            for (let style of styleList) {
+              addStyle(spanText, style, styleList[style]);
+            }
+            spanText.innerText = span.children[0]?.innerText;
+            rowWrapper.appendChild(spanText);
+          }
         }
+        wrapper.appendChild(rowWrapper);
       }
-      wrapper.appendChild(rowWrapper)
-    }
-    console.log(wrapper)
-  }
+      return wrapper;
+    };
+    // Clone element
+    const contentDiv = this.RexEditorRef.current.editor.children[0].cloneNode(
+      true
+    );
+
+    let wrapper = document.createElement("div");
+    wrapper = transformList(wrapper, contentDiv);
+    console.log(wrapper);
+  };
 
   render() {
     return (
       <div className="rex-editor">
-        <SketchPicker
-          color={ Object.keys(this.state.colorStyleMap)[0] }
-          onChangeComplete={ (color)=>{this.setColorStyleMap(color.hex)} }
-        />
+        <div
+          className="color-picker"
+          style={{
+            display: this.state.showColorPicker ? "block" : "none",
+            position: "absolute",
+            zIndex: 999,
+          }}
+        >
+          <SketchPicker
+            color={this.state.style.color}
+            onChangeComplete={(color) => {
+              this.setStyleState("color", color.hex);
+            }}
+          />
+        </div>
         <div className="menu-bar">
           <button onClick={() => this.onMenuClick("bold")}>B</button>
           <button onClick={() => this.onMenuClick("italic")}>I</button>
           <button onClick={() => this.onMenuClick("underline")}>U</button>
           <button onClick={() => this.onMenuClick("text-left")}>Left</button>
-          <button onClick={() => this.onMenuClick("text-center")}>
-            Center
-          </button>
+          <button onClick={() => this.onMenuClick("text-center")}>Center</button>
           <button onClick={() => this.onMenuClick("text-right")}>Right</button>
+          <button onClick={() => this.onMenuClick("unordered-list")}>...</button>
+          <button onClick={() => this.onMenuClick("ordered-list")}>123</button>
           <button onClick={() => this.onMenuClick("undo")}>Undo</button>
           <button onClick={() => this.onMenuClick("redo")}>Redo</button>
-          {/* <button onClick={() => this.getSelectedBlock()}>
-            Get Selection block
-          </button> */}
-          <button onClick={() => this.setColor(Object.keys(this.state.colorStyleMap)[0])}>Set Color</button>
-          <button onClick={() => this.getHTML()}>html</button>
+          <button onClick={() => this.onMenuClick("color-picker")}>Color Picker</button>
+          <button onClick={() => this.onMenuClick("set-color")}>Set Color</button>
+          <button onClick={() => this.onMenuClick("set-font-size")}>Set Size</button>
+          <button onClick={() => this.onMenuClick("get-html")}>HTML</button>
+          {/* <button onClick={() => this.getSelectedBlock()}>Get Selection block</button> */}
         </div>
         <Editor
-          customStyleMap={this.state.colorStyleMap}
+          customStyleMap={this.state.styleMap}
           editorState={this.state.editorState}
           onChange={this.onTextChange}
           handleKeyCommand={this.handleKeyCommand}
