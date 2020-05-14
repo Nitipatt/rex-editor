@@ -38,13 +38,17 @@ export default class RexEditor extends React.Component {
     this.state = {
       editorState: EditorState.createEmpty(),
       styleMap: {},
-      style: {
+      defaulfStyle: {
         color: "#000",
-        fontSize: "18px",
+        fontSize: "14px",
       },
+      style: {},
       showColorPicker: false,
     };
     this.RexEditorRef = React.createRef();
+  }
+  componentDidMount(){
+    this.setState({style: this.state.defaulfStyle})
   }
   setNewEditorState = (newState) => {
     this.setState({ editorState: newState });
@@ -203,6 +207,9 @@ export default class RexEditor extends React.Component {
     );
 
     let wrapper = document.createElement("div");
+    Object.entries(this.state.defaulfStyle).forEach((item)=>{
+      wrapper.style[item[0]] = item[1]
+    })
     wrapper = transformList(wrapper, contentDiv);
     console.log(wrapper);
   };
@@ -242,15 +249,17 @@ export default class RexEditor extends React.Component {
           <button onClick={() => this.onMenuClick("get-html")}>HTML</button>
           {/* <button onClick={() => this.getSelectedBlock()}>Get Selection block</button> */}
         </div>
-        <Editor
-          customStyleMap={this.state.styleMap}
-          editorState={this.state.editorState}
-          onChange={this.onTextChange}
-          handleKeyCommand={this.handleKeyCommand}
-          blockStyleFn={this.getBlockStyle}
-          blockRenderMap={extendedBlockRenderMap}
-          ref={this.RexEditorRef}
-        />
+        <div className="editor-section" style={this.state.defaulfStyle}>
+          <Editor
+            customStyleMap={this.state.styleMap}
+            editorState={this.state.editorState}
+            onChange={this.onTextChange}
+            handleKeyCommand={this.handleKeyCommand}
+            blockStyleFn={this.getBlockStyle}
+            blockRenderMap={extendedBlockRenderMap}
+            ref={this.RexEditorRef}
+          />
+        </div>
       </div>
     );
   }
