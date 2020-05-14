@@ -41,6 +41,7 @@ export default class RexEditor extends React.Component {
           color: 'black',
         }
       }};
+      this.RexEditorRef = React.createRef();
   }
   setNewEditorState = (newState) => {
     this.setState({ editorState: newState });
@@ -82,6 +83,7 @@ export default class RexEditor extends React.Component {
         return "text-center";
       case "textRight":
         return "text-right";
+      default: return '';
     }
   };
   setBlockType = (blockType) => {
@@ -145,6 +147,44 @@ export default class RexEditor extends React.Component {
 
     this.setNewEditorState(nextEditorState);
   };
+  getHTML = () => {
+    // Use function
+    const addStyle = (element, styleName, value) => {
+      return element.style[styleName] = value
+    }
+    // Clone element
+    const contentDiv = this.RexEditorRef.current.editor.children[0].cloneNode(true)
+
+    let wrapper = document.createElement("div")
+    for(let item of contentDiv.children){
+      const rowClassList = item.classList
+      let rowWrapper = document.createElement("div")
+      for(let rowClass of rowClassList){
+        switch(rowClass){
+          case 'text-left': addStyle(rowWrapper,'text-align', 'left')
+          break
+          case 'text-center': addStyle(rowWrapper,'text-align', 'center')
+          break
+          case 'text-right': addStyle(rowWrapper,'text-align', 'right')
+          break
+          default: break
+        }
+      }
+      if(item.children[0].children){
+        for(let span of item.children[0].children){
+          const styleList = span.style
+          let spanText = document.createElement("span")
+          for(let style of styleList){
+            addStyle(spanText, style, styleList[style])
+          }
+          spanText.innerText = span.children[0].innerText
+          rowWrapper.appendChild(spanText)
+        }
+      }
+      wrapper.appendChild(rowWrapper)
+    }
+    console.log(wrapper)
+  }
 
   render() {
     return (
@@ -168,6 +208,7 @@ export default class RexEditor extends React.Component {
             Get Selection block
           </button> */}
           <button onClick={() => this.setColor(Object.keys(this.state.colorStyleMap)[0])}>Set Color</button>
+          <button onClick={() => this.getHTML()}>html</button>
         </div>
         <Editor
           customStyleMap={this.state.colorStyleMap}
@@ -176,6 +217,7 @@ export default class RexEditor extends React.Component {
           handleKeyCommand={this.handleKeyCommand}
           blockStyleFn={this.getBlockStyle}
           blockRenderMap={extendedBlockRenderMap}
+          ref={this.RexEditorRef}
         />
       </div>
     );
