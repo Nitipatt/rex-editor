@@ -2,6 +2,22 @@
   .menu-bar{
     display: flex;
     flex-flow: row wrap;
+    .color-picker{
+      position: absolute;
+      top: 43px;
+      left: 45px;
+      z-index: 999;
+    }
+    .heading-picker{
+      display: flex;
+      position: absolute;
+      top: 43px;
+      z-index: 999;
+      background-color: white;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+
+    }
     .icon-btn{
       display: flex;
       background-color: #fff;
@@ -31,6 +47,9 @@
           background-color: #fff;
           cursor: pointer;
         }
+      }
+      .heading-text{
+        font-weight: bolder;
       }
     }
   }

@@ -4,7 +4,6 @@ import {
   EditorState,
   RichUtils,
   DefaultDraftBlockRenderMap,
-  Modifier,
 } from "draft-js";
 import "./scss/RexEditor.scss";
 import Immutable from "immutable";
@@ -31,7 +30,7 @@ export default class RexEditor extends React.Component {
       styleMap: {},
       defaulfStyle: {
         color: "#000",
-        fontSize: "14px",
+        fontSize: "16px",
       },
       style: {},
     };
@@ -74,6 +73,10 @@ export default class RexEditor extends React.Component {
     );
     this.setState({ editorState });
   };
+  setHeading = (type) => {
+    const headingMap = ['header-one','header-two','header-three','header-four','header-five','header-six']
+    this.setBlockType(headingMap[type-1])
+  }
   // getSelectedBlock = () => {
   //   const { editorState } = this.state;
   //   var startKey = editorState.getSelection().getStartKey();
@@ -113,11 +116,11 @@ export default class RexEditor extends React.Component {
       "change-inline-style"
     );
     const currentStyle = editorState.getCurrentInlineStyle();
-    if (selection.isCollapsed()) {
-      nextEditorState = currentStyle.reduce((state, style) => {
-        return RichUtils.toggleInlineStyle(state, style);
-      }, nextEditorState);
-    }
+    // if (selection.isCollapsed()) {
+    //   nextEditorState = currentStyle.reduce((state, style) => {
+    //     return RichUtils.toggleInlineStyle(state, style);
+    //   }, nextEditorState);
+    // }
     if (!currentStyle.has(toggledStyle)) {
       nextEditorState = RichUtils.toggleInlineStyle(
         nextEditorState,
@@ -201,14 +204,14 @@ export default class RexEditor extends React.Component {
       setStyleState,
       handleKey,
       undo,
-      redo
+      redo,
+      setHeading,
     } = this
     return (
       <div className="rex-editor">
         <MenuBar 
             style = {this.state.style}
-            funcProps = {
-              {
+            funcProps = {{
               setNewEditorState,
               setBlockType,
               activeStyle,
@@ -216,8 +219,9 @@ export default class RexEditor extends React.Component {
               setStyleState,
               handleKey,
               undo,
-              redo}
-            }
+              redo,
+              setHeading,
+            }}
         ></MenuBar>
         <div className="editor-section" style={this.state.defaulfStyle}>
           <Editor
