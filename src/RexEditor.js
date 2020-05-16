@@ -105,16 +105,25 @@ export default class RexEditor extends React.Component {
   };
   setStyleMapToEditor = (toggledStyle) => {
     const { editorState } = this.state;
+    const selection = editorState.getSelection();
     const nextContentState = editorState.getCurrentContent();
     let nextEditorState = EditorState.push(
       editorState,
       nextContentState,
       "change-inline-style"
     );
-    nextEditorState = RichUtils.toggleInlineStyle(
-      nextEditorState,
-      toggledStyle
-    );
+    const currentStyle = editorState.getCurrentInlineStyle();
+    if (selection.isCollapsed()) {
+      nextEditorState = currentStyle.reduce((state, style) => {
+        return RichUtils.toggleInlineStyle(state, style);
+      }, nextEditorState);
+    }
+    if (!currentStyle.has(toggledStyle)) {
+      nextEditorState = RichUtils.toggleInlineStyle(
+        nextEditorState,
+        toggledStyle
+      );
+    }
     this.setNewEditorState(nextEditorState);
   };
   getHTML = () => {
