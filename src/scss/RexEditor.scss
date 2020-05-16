@@ -6,6 +6,17 @@
   .menu-bar{
     display: flex;
     flex-flow: row wrap;
+    .icon-btn{
+      background-color: #fff;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      padding: 5px;
+      margin: 2px;
+      &:hover{
+        background-color: #eee;
+        cursor: pointer;
+      }
+    }
   }
   .DraftEditor-root{
     border-top: 1px solid #999;
