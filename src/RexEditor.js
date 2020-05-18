@@ -109,8 +109,6 @@ export default class RexEditor extends React.Component {
   };
   setStyleMapToEditor = (toggledStyle) => {
     const { editorState } = this.state;
-    const selection = editorState.getSelection();
-    console.log(selection)
     const nextContentState = editorState.getCurrentContent();
     let nextEditorState = EditorState.push(
       editorState,
@@ -118,11 +116,6 @@ export default class RexEditor extends React.Component {
       "change-inline-style"
     );
     const currentStyle = editorState.getCurrentInlineStyle();
-    // if (selection.isCollapsed()) {
-    //   nextEditorState = currentStyle.reduce((state, style) => {
-    //     return RichUtils.toggleInlineStyle(state, style);
-    //   }, nextEditorState);
-    // }
     if (!currentStyle.has(toggledStyle)) {
       nextEditorState = RichUtils.toggleInlineStyle(
         nextEditorState,

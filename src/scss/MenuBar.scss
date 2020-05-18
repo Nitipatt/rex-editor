@@ -2,6 +2,8 @@
   .menu-bar{
     display: flex;
     flex-flow: row wrap;
+    background-color: #ebf2ff;
+    padding: 3px 5px;
     .color-picker{
       position: absolute;
       top: 43px;
@@ -50,10 +52,6 @@
       }
       .heading-text, .font-size-picker{
         font-weight: bolder;
-      }
-      .lower-a{
-        font-weight: bold;
-        transform: translate(2px,0.5px) scale(1.1);
       }
     }
   }

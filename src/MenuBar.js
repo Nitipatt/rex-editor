@@ -64,6 +64,8 @@ export default class MenuBar extends React.Component {
         return this.props.funcProps.getHTML()
       case "set-font-size":
         this.setState({showFontSizePicker: false})
+        return this.props.funcProps.setStyleState('fontSize',value)
+      case "active-font-size":
         return this.props.funcProps.activeStyle("fontSize")
       case "set-heading":
         this.setState({showHeadingPicker: false})
@@ -151,15 +153,18 @@ export default class MenuBar extends React.Component {
               })}            
             </div>: ''
           }
-          <div className="icon-btn font-size-picker-dropdown" onClick={() => this.onMenuClick('font-size-picker')}>
-            <i className='fas fa-font font-size-picker-dropdown'></i><span className="lower-a">a</span>
+          <div className="icon-btn font-size-picker-dropdown" onClick={() => this.onMenuClick('active-font-size')}>
+            <span style={{fontWeight:'bold'}}>{this.props.style.fontSize?.replace('px','')}</span>
+            <div className='drop-down font-size-picker-dropdown' onClick={() => this.onMenuClick('font-size-picker')}>
+              <i className="fas fa-caret-down font-size-picker-dropdown"></i>
+            </div>
           </div>
           {
             this.state.showFontSizePicker ? 
             <div className='font-size-picker' ref={(node)=>this.setRef('fontSizeRef',node)}>
               {fontSize.map((size) => {
                 return ( 
-                <div key={`fontSize-${size}`} className="icon-btn font-size" onClick={() => this.onMenuClick('set-font-size',size)}>
+                <div key={`fontSize-${size}`} className="icon-btn font-size" onClick={() => this.onMenuClick('set-font-size',size+'px')}>
                   <i className='fas fa-font-size'></i><span className="font-size-text">{size}</span>
                 </div>)
               })}            
