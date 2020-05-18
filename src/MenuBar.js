@@ -8,6 +8,7 @@ export default class MenuBar extends React.Component {
     this.state = {
       showColorPicker: false,
       showHeadingPicker: false,
+      showFontSizePicker: false
     }
   }
 
@@ -30,10 +31,12 @@ export default class MenuBar extends React.Component {
     if (this.headingRef && !this.headingRef?.contains(event.target) && !(event.target.classList.contains('heading-picker-dropdown'))) {
       this.setState({showHeadingPicker: false})
     }
+    if (this.fontSizeRef && !this.fontSizeRef?.contains(event.target) && !(event.target.classList.contains('font-size-picker-dropdown'))) {
+      this.setState({showFontSizePicker: false})
+    }
   }
   
   onMenuClick = (command, value = undefined) => {
-    console.log(command + " clicked");
     switch (command) {
       case "undo":
         return this.props.funcProps.undo();
@@ -53,13 +56,17 @@ export default class MenuBar extends React.Component {
         return this.setState({ showColorPicker: !this.state.showColorPicker })
       case "heading-picker":
         return this.setState({ showHeadingPicker: !this.state.showHeadingPicker })
+      case "font-size-picker":
+        return this.setState({ showFontSizePicker: !this.state.showFontSizePicker })
       case "set-color":
         return this.props.funcProps.activeStyle("color")
       case "get-html":
         return this.props.funcProps.getHTML()
       case "set-font-size":
+        this.setState({showFontSizePicker: false})
         return this.props.funcProps.activeStyle("fontSize")
       case "set-heading":
+        this.setState({showHeadingPicker: false})
         return this.props.funcProps.setHeading(value); 
       default:
         return this.props.funcProps.handleKey(command);
@@ -110,6 +117,7 @@ export default class MenuBar extends React.Component {
         icon: 'fas fa-code' 
       },
     ]
+    const fontSize = [10,12,14,16,18,20,22,24,26,28,36,48,72]
     return (
       <Fragment>
         <div className="menu-bar">
@@ -142,6 +150,20 @@ export default class MenuBar extends React.Component {
                 </div>)
               })}            
             </div>: ''
+          }
+          <div className="icon-btn font-size-picker-dropdown" onClick={() => this.onMenuClick('font-size-picker')}>
+            <i className='fas fa-font font-size-picker-dropdown'></i><span className="lower-a">a</span>
+          </div>
+          {
+            this.state.showFontSizePicker ? 
+            <div className='font-size-picker' ref={(node)=>this.setRef('fontSizeRef',node)}>
+              {fontSize.map((size) => {
+                return ( 
+                <div key={`fontSize-${size}`} className="icon-btn font-size" onClick={() => this.onMenuClick('set-font-size',size)}>
+                  <i className='fas fa-font-size'></i><span className="font-size-text">{size}</span>
+                </div>)
+              })}            
+            </div>: ''
           } 
           <div className="icon-btn" onClick={() => this.onMenuClick("set-color")}>
             <div className='show-color' style={{backgroundColor: this.props.style.color}}></div>
@@ -153,8 +175,6 @@ export default class MenuBar extends React.Component {
           {
             menuList.map(item=>this.renderButton(item.icon, item.name))
           }
-          
-          <button onClick={() => this.onMenuClick("set-font-size")}>Set Size</button>
           {/* <button onClick={() => this.getSelectedBlock()}>Get Selection block</button> */}
         </div>
       </Fragment>

@@ -1,4 +1,4 @@
-import React from "react";
+import React, { Fragment } from "react";
 import {
   Editor,
   EditorState,
@@ -33,6 +33,7 @@ export default class RexEditor extends React.Component {
         fontSize: "16px",
       },
       style: {},
+      htmlOutput:''
     };
     this.RexEditorRef = React.createRef();
   }
@@ -109,6 +110,7 @@ export default class RexEditor extends React.Component {
   setStyleMapToEditor = (toggledStyle) => {
     const { editorState } = this.state;
     const selection = editorState.getSelection();
+    console.log(selection)
     const nextContentState = editorState.getCurrentContent();
     let nextEditorState = EditorState.push(
       editorState,
@@ -166,7 +168,9 @@ export default class RexEditor extends React.Component {
             for (let style of styleList) {
               addStyle(spanText, style, styleList[style]);
             }
-            spanText.innerText = span.children[0]?.innerText;
+            let spanChild = span.children[0];
+            spanChild.removeAttribute('data-text');
+            spanText.appendChild(spanChild);
             rowWrapper.appendChild(spanText);
           }
         }
@@ -184,6 +188,7 @@ export default class RexEditor extends React.Component {
     })
     wrapper = transformList(wrapper, contentDiv);
     console.log(wrapper);
+    this.setState({htmlOutput: wrapper.outerHTML})
   };
   undo = () => {
     this.setNewEditorState(EditorState.undo(this.state.editorState));
@@ -208,33 +213,36 @@ export default class RexEditor extends React.Component {
       setHeading,
     } = this
     return (
-      <div className="rex-editor">
-        <MenuBar 
-            style = {this.state.style}
-            funcProps = {{
-              setNewEditorState,
-              setBlockType,
-              activeStyle,
-              getHTML,
-              setStyleState,
-              handleKey,
-              undo,
-              redo,
-              setHeading,
-            }}
-        ></MenuBar>
-        <div className="editor-section" style={this.state.defaulfStyle}>
-          <Editor
-            customStyleMap={this.state.styleMap}
-            editorState={this.state.editorState}
-            onChange={this.onTextChange}
-            handleKeyCommand={this.handleKeyCommand}
-            blockStyleFn={this.getBlockStyle}
-            blockRenderMap={extendedBlockRenderMap}
-            ref={this.RexEditorRef}
-          />
+      <Fragment>
+        <div className="rex-editor">
+          <MenuBar 
+              style = {this.state.style}
+              funcProps = {{
+                setNewEditorState,
+                setBlockType,
+                activeStyle,
+                getHTML,
+                setStyleState,
+                handleKey,
+                undo,
+                redo,
+                setHeading,
+              }}
+          ></MenuBar>
+          <div className="editor-section" style={this.state.defaulfStyle}>
+            <Editor
+              customStyleMap={this.state.styleMap}
+              editorState={this.state.editorState}
+              onChange={this.onTextChange}
+              handleKeyCommand={this.handleKeyCommand}
+              blockStyleFn={this.getBlockStyle}
+              blockRenderMap={extendedBlockRenderMap}
+              ref={this.RexEditorRef}
+            />
+          </div>
         </div>
-      </div>
+        <div dangerouslySetInnerHTML={{__html: this.state.htmlOutput}} ></div>
+      </Fragment>
     );
   }
 }
